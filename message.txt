@@ -2,4 +2,3 @@ The Caesar Cipher technique is one of the earliest and simplest methods of encry
 It is simply a type of substitution cipher, i.e., each letter of a given text is replaced by a letter with a fixed number of positions down the alphabet.
 For example with a shift of one, A would be replaced by B, B would become C, and so on.
 The method is apparently named after Julius Caesar, who apparently used it to communicate with his officials.
-pavithra
