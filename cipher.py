@@ -1,5 +1,7 @@
 from collections import Counter
 import argparse
+import matplotlib.pyplot as plt
+import networkx as nx
 
 def char_replace_lower(line, to_be_replaced, to_be_replaced_with = ''):
     '''
@@ -39,6 +41,87 @@ def print_stdout(text):
     '''
     line = 25 * "-"
     print(line + text + line)
+
+def create_labels(score_list, edge):
+    '''
+    This function creates the labels for the networkx graph edges.
+    Args:
+        score_list (list): List of the scores obtained via letter frequency/bigram frequency
+        edge (list[list]): A list containing pair list of each edge
+    Return:
+        labels which is a dict{tuple: value}
+    '''
+    labels = {}
+    count = 0
+    for i in edge:
+        test = (i[0], i[1])
+        labels[test] = score_list[count]
+        count = count + 1
+    #print(labels)
+    return labels
+
+def create_graph(selected, root, score_list, file_name):
+    '''
+    This function creates a graph.
+    Args:
+        selected (int): The 'n' caesar rotation value chosen
+        root (str): The root of the graph
+        score_list (list): List of the scores obtained via letter frequency/bigram frequency
+        file_name (str): The file name for saving the graph
+    '''
+    edge = []
+    
+    for i in range(0,27):
+        edge.append([root, i])
+
+    G = nx.Graph()
+    G.add_edges_from(edge)
+    pos = nx.spring_layout(G, scale=5)
+    plt.figure()
+
+    color_map = ['green' if node == selected else 'pink' for node in G]     
+    #graph = nx.draw_networkx(G,pos, node_color=color_map) 
+
+    nx.draw(G, pos, edge_color='black', width=1, linewidths=1,
+    node_size=400, node_color=color_map, alpha=0.9,
+    labels={node: node for node in G.nodes()})
+
+    nx.draw_networkx_edge_labels(G, pos, 
+    edge_labels = create_labels(score_list, edge), font_color='red')
+    #plt.axis('off')
+    plt.savefig("states/" + file_name + ".png")
+
+def create_straight_graph(selected, root, file_name, labels):
+    '''
+    This function creates a straight graph with no edge labels
+    Args:
+        selected (int): The 'n' caesar rotation value chosen
+        root (str): The root of the graph
+        file_name (str): The file name for saving the graph
+    '''
+
+    edge = [[root, 1]]
+    for i in range(1,26):
+        edge.append([i, i+1])
+    #print(edge)
+    G = nx.Graph()
+    G.add_edges_from(edge)
+    pos = nx.spring_layout(G, scale=5)
+    plt.figure()
+
+    color_map = ['green' if node == selected else 'pink' for node in G]   
+    #graph = nx.draw_networkx(G,pos, node_color=color_map) # node lables
+
+    nx.draw(
+        G, pos, edge_color='black', width=1, linewidths=1,
+        node_size=400, node_color=color_map, alpha=0.9,
+        labels={node: node for node in G.nodes()}
+    )
+    nx.draw_networkx_edge_labels(G, pos, 
+    edge_labels = create_labels(labels, edge), font_color='red', font_size=8,
+    rotate=False)
+
+    plt.savefig("states/" + file_name + ".png")
 
 class CaesarCipher:
 
@@ -108,7 +191,7 @@ class CaesarCipher:
         '''
         This function reads the CSV file to get the frequency of each alphabet.
         '''
-        file = 'letter_frequencies.csv'
+        file = 'frequencies/letter_frequencies.csv'
         f = open(file, "r+")
 
         for line in f:
@@ -140,7 +223,7 @@ class CaesarCipher:
         Args:
             cipher_text (str): The cipher text
         Return:
-            The cracked plain text and 'n' rotation factor
+            The cracked plain text,'n' rotation factor, scores list
         '''
         #List to store each decode possibility
         decode_list = []
@@ -152,7 +235,7 @@ class CaesarCipher:
             for c in cipher_text:
                 p = self.monoalpha_shift(c, i * -1)
                 plain += p
-
+            #print(self.score_string(plain))
             decode_list.append(plain)
             decode_scores.append(self.score_string(plain))
     
@@ -163,7 +246,7 @@ class CaesarCipher:
                 max_score = decode_scores[i]
                 max_score_index = i
 
-        return decode_list[max_score_index], max_score_index
+        return decode_list[max_score_index], max_score_index, decode_scores
     
     def crack_caesar_27n(self, cipher_text, i):
         '''
@@ -185,7 +268,7 @@ class CaesarCipher:
         '''
         This function reads the CSV file to get the bigram frequency.
         '''
-        file = 'bigram_frequency.csv'
+        file = 'frequencies/bigram_frequency.csv'
         f = open(file, "r+")
 
         for line in f:
@@ -226,7 +309,7 @@ class CaesarCipher:
         Args:
             cipher_text (str): The cipher text
         Return:
-            The cracked plain text and 'n' rotation factor
+            The cracked plain text, 'n' rotation factor and bigram frequency score
         '''
         #List to store each decode possibility
         decode_list = []
@@ -249,7 +332,7 @@ class CaesarCipher:
                 max_score = decode_scores[i]
                 max_score_index = i
 
-        return decode_list[max_score_index], max_score_index
+        return decode_list[max_score_index], max_score_index, decode_scores
 
 
 parser = argparse.ArgumentParser()
@@ -267,36 +350,51 @@ message = read_message(message_file)
 message = message + " " + name
 
 cipher_text = cipher_obj.encode_caesar(message, n)
-print('Encrypted Cipher Text:', cipher_text[:-1 * len(name)])
-
 decoded_message = cipher_obj.decode_caesar(cipher_text[:-1 * len(name)], n)
-print('Decoded Message:', decoded_message)
+
+print('Message:', decoded_message, "\n")
+print('Encrypted Cipher Text:', cipher_text[:-1 * len(name)])
 
 print_stdout("Encoding name")
 print(f'Ciphertext corresponsding to {name}: {cipher_text[-1 * len(name):]}')
 
 print_stdout("Cracking using frequency analysis")
-cracked, n = cipher_obj.crack_caesar_frequency(cipher_text)
+
+cracked, n, score_list = cipher_obj.crack_caesar_frequency(cipher_text)
 print('Cracked Cipher Text:', cracked[:-1 * len(name)])
 print('Cracked name:', cracked[-1 * len(name):])
 print(f"The value of n is: {n}")
+create_graph(n, 'root', score_list, "frequency-analysis")
 
 print_stdout("Cracking using bigram analysis")
-cracked, n = cipher_obj.crack_caesar_bigram(cipher_text)
+
+cracked, n, score_list = cipher_obj.crack_caesar_bigram(cipher_text)
 print('Cracked Cipher Text:', cracked[:-1 * len(name)])
 print('Cracked name:', cracked[-1 * len(name):])
 print(f"The value of n is: {n}")
+create_graph(n, 'root', score_list, "bigram-analysis")
 
 print_stdout("Cracking using mono-alphabetic substitution")
+
 op = 'n'
+possible = []
 
 for i in range(1,27):
+
     print(f"Iteration number: {i}")
     cracked = cipher_obj.crack_caesar_27n(cipher_text, i)
     print('Cracked Cipher Text:', cracked[:-1 * len(name)])
     print_stdout(30 * "-")
-    op = input("Type 'y' if it seems valid, else 'n': ")
+    # creating a list with all the possible name decodings for graph label
+    possible.append(cracked[-1 * len(name):])
 
+    op = input("Type 'y' if it seems valid, else 'n': ")
     if op == 'y':
+
         print('Cracked name:', cracked[-1 * len(name):])
+        for j in range(i+1, 27):
+            #add space labels for remaining edges
+            possible.append(' ')
+
+        create_straight_graph(i, 'root', "mono-sub", possible)
         break
