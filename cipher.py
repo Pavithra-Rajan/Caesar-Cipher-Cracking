@@ -1,3 +1,5 @@
+from collections import Counter
+
 def char_replace_lower(line, to_be_replaced, to_be_replaced_with = ''):
     '''
     This function will replace a character with another character ('' by default) and convert
@@ -28,9 +30,6 @@ def read_message(file_name):
         message += char_replace_lower(line, '\n', ' ')
     return message
 
-def find_ngrams(input_list, n):
-  return zip(*(input_list[i:] for i in range(n)))
-
 def print_stdout(text):
     '''
     This function is just used for stdout printing to separate each section.
@@ -55,7 +54,9 @@ class CaesarCipher:
         's': 18, 't': 19, 'u': 20,'v': 21, 'w': 22, 'x': 23, 'y': 24, 'z': 25, ' ': 26}
         self.alpha_dict_complement = {v: k for k, v in self.alpha_dict.items()}
         self.freq_dict = {}
+        self.bigram_dict = {}
         self.frequency_csv_read()
+        self.bigram_csv_read()
 
     def monoalpha_shift(self, letter, n):
         '''
@@ -98,7 +99,6 @@ class CaesarCipher:
         '''
         plain_text = ""
         for c in cipher_text:
-            # rotate backward number = -n= n*-1
             p = self.monoalpha_shift(c, n * -1)
             plain_text += p
         return plain_text
@@ -132,14 +132,14 @@ class CaesarCipher:
 
         return score
 
-    def crack_caesar(self, cipher_text):
+    def crack_caesar_frequency(self, cipher_text):
         '''
         This function attempts to crack the caesar cipher using the frequency distribution.
         The outcome which gives the maximum score when evaluated is accepted.
         Args:
             cipher_text (str): The cipher text
         Return:
-            The cracked plain text
+            The cracked plain text and 'n' rotation factor
         '''
         #List to store each decode possibility
         decode_list = []
@@ -154,7 +154,7 @@ class CaesarCipher:
 
             decode_list.append(plain)
             decode_scores.append(self.score_string(plain))
-
+    
         max_score = 0
         max_score_index = -1
         for i in range(len(self.alpha_dict)):
@@ -162,9 +162,9 @@ class CaesarCipher:
                 max_score = decode_scores[i]
                 max_score_index = i
 
-        return decode_list[max_score_index]
+        return decode_list[max_score_index], max_score_index
     
-    def crack_caesar27n(self, cipher_text, i):
+    def crack_caesar_27n(self, cipher_text, i):
         '''
         This function tries to crack the Caesar cipher by trying all 27 possibilities.
         Args:
@@ -179,27 +179,101 @@ class CaesarCipher:
             p = self.monoalpha_shift(c, i * -1)
             plain_text += p
         return plain_text
+ 
+    def bigram_csv_read(self):
+        '''
+        This function reads the CSV file to get the bigram frequency.
+        '''
+        file = 'bigram_frequency.csv'
+        f = open(file, "r+")
+
+        for line in f:
+            line = line.lower().replace("\n", "")
+            k, v = line.split(",")
+            self.bigram_dict[k] = float(v)
+        #print(self.bigram_dict)
+        f.close()
+    
+    def bigram_score(self, cipher):
+        '''
+        This function computes the bigram frequency distribution value of the string.
+        Args:
+            string (str): The message to be evaluated
+        Return:
+            The bigram frequency score
+        '''
+        score = 0.0
+        # create a bigram frequency dictionary of the ciphertext
+        bigram_freq = Counter(cipher[idx : idx + 2] for idx in range(len(cipher) - 1))
+        sorted_bigram ={k: v for k, v in sorted(dict(bigram_freq).items(), key=lambda item: item[1])}
+        
+        for k in sorted_bigram.keys():
+            try:
+                #possible that not all bigrams in the dictionary so escape those
+                score += self.bigram_dict[k]
+            except:
+                pass
+
+        return score
+        #bigram_freq = Counter(cipher[idx : idx + 2] for idx in range(len(cipher) - 1))
+        #return {k: v for k, v in sorted(dict(bigram_freq).items(), key=lambda item: item[1])}
+
+    def crack_caesar_bigram(self, cipher_text):
+        '''
+        This function attempts to crack the caesar cipher using the bigram frequency distribution.
+        The outcome which gives the maximum score when evaluated is accepted.
+        Args:
+            cipher_text (str): The cipher text
+        Return:
+            The cracked plain text and 'n' rotation factor
+        '''
+        #List to store each decode possibility
+        decode_list = []
+        #List to store the frequency score of each decode
+        decode_scores = []
+
+        for i in range(len(self.alpha_dict)):
+            plain = ""
+            for c in cipher_text:
+                p = self.monoalpha_shift(c, i * -1)
+                plain += p
+
+            decode_list.append(plain)
+            decode_scores.append(self.bigram_score(plain))
+
+        max_score = 0
+        max_score_index = -1
+        for i in range(len(self.alpha_dict)):
+            if decode_scores[i] > max_score:
+                max_score = decode_scores[i]
+                max_score_index = i
+
+        return decode_list[max_score_index], max_score_index
 
 
 cipher_obj = CaesarCipher()
 print_stdout("Read Plain Text")
-message = read_message("message.txt")
-trigrams = find_ngrams(message, 3)
-print(list(trigrams)[1])
+message = read_message("message2.txt")
 
 cipher_text = cipher_obj.encode_caesar(message, 4)
 print('Encrypted Cipher Text:', cipher_text)
 decoded_message = cipher_obj.decode_caesar(cipher_text, 4)
 print('Decoded Message:', decoded_message)
 print_stdout("Cracking using frequency analysis")
-cracked = cipher_obj.crack_caesar(cipher_text)
-print('Cracked Code:', cracked)
+cracked, n = cipher_obj.crack_caesar_frequency(cipher_text)
+print('Cracked Cipher Text:', cracked)
+print(f"The value of n is: {n}")
 
-print_stdout("Cracking using monogram substitution")
+print_stdout("Cracking using bigram analysis")
+cracked, n = cipher_obj.crack_caesar_bigram(cipher_text)
+print('Cracked Cipher Text:', cracked)
+print(f"The value of n is: {n}")
+
+print_stdout("Cracking using mono-alphabetic substitution")
 op = 'n'
 for i in range(1,27):
     print(f"Iteration number: {i}")
-    print(cipher_obj.crack_caesar27n(cipher_text, i))
+    print(cipher_obj.crack_caesar_27n(cipher_text, i))
     op = input("Type 'y' if it seems valid, else 'n': ")
     if op == 'y':
         break
