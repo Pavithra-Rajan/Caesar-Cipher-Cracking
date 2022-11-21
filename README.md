@@ -7,12 +7,13 @@
 python3 cipher.py -h
 ```
 ```console
-usage: hill_climb.py [-h] -f F
+usage: cipher.py [-h] -f F -c C [-n N]
 
 optional arguments:
   -h, --help  show this help message and exit
-  -f F        Name of the file containing the
-              ciphertext to be decrypted
+  -f F        Name of the file containing the plaintext to be encrypted
+  -c C        The Caesar rotation factor
+  -n N        Name to be encoded
 ```
 ### Run the file
 ```console
@@ -57,3 +58,8 @@ python3 hill-climb.py -f ciphers/cipher.txt
 ![hill climbing](/states/hillclimbing.png "Hill Climbing") <p></p>
 Here the scores for each iteration will be computed till a local maximum is reached and shown to the user. If the text resembles a valid English text, then we can stop.
 We can see below that the scores progressively increase (becomes less negative). The graph depicting the scores across each iteration is also generated.
+
+### Install the required library
+```console
+pip install -r requirements.txt
+```
