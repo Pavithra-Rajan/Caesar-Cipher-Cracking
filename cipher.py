@@ -334,67 +334,67 @@ class CaesarCipher:
 
         return decode_list[max_score_index], max_score_index, decode_scores
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', type=str, required=True, help="Name of the file containing the plaintext to be encrypted")
+    parser.add_argument('-c', type=int, required=True, help="The Caesar rotation factor")
+    parser.add_argument('-n', type=str, help="Name to be encoded")
+    args = parser.parse_args()
+    message_file = args.f
+    #print(args.n)
+    n = args.c
+    name = args.n
+    cipher_obj = CaesarCipher()
+    print_stdout("Read Plain Text")
+    message = read_message(message_file)
+    message = message + " " + name
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-f', type=str, required=True, help="Name of the file containing the plaintext to be encrypted")
-parser.add_argument('-c', type=int, required=True, help="The Caesar rotation factor")
-parser.add_argument('-n', type=str, help="Name to be encoded")
-args = parser.parse_args()
-message_file = args.f
-#print(args.n)
-n = args.c
-name = args.n
-cipher_obj = CaesarCipher()
-print_stdout("Read Plain Text")
-message = read_message(message_file)
-message = message + " " + name
+    cipher_text = cipher_obj.encode_caesar(message, n)
+    decoded_message = cipher_obj.decode_caesar(cipher_text[:-1 * len(name)], n)
 
-cipher_text = cipher_obj.encode_caesar(message, n)
-decoded_message = cipher_obj.decode_caesar(cipher_text[:-1 * len(name)], n)
+    print('Message:', decoded_message, "\n")
+    print('Encrypted Cipher Text:', cipher_text[:-1 * len(name)])
 
-print('Message:', decoded_message, "\n")
-print('Encrypted Cipher Text:', cipher_text[:-1 * len(name)])
+    print_stdout("Encoding name")
+    print(f'Ciphertext corresponsding to {name}: {cipher_text[-1 * len(name):]}')
 
-print_stdout("Encoding name")
-print(f'Ciphertext corresponsding to {name}: {cipher_text[-1 * len(name):]}')
+    print_stdout("Cracking using frequency analysis")
 
-print_stdout("Cracking using frequency analysis")
-
-cracked, n, score_list = cipher_obj.crack_caesar_frequency(cipher_text)
-print('Cracked Cipher Text:', cracked[:-1 * len(name)])
-print('Cracked name:', cracked[-1 * len(name):])
-print(f"The value of n is: {n}")
-create_graph(n, 'root', score_list, "frequency-analysis")
-
-print_stdout("Cracking using bigram analysis")
-
-cracked, n, score_list = cipher_obj.crack_caesar_bigram(cipher_text)
-print('Cracked Cipher Text:', cracked[:-1 * len(name)])
-print('Cracked name:', cracked[-1 * len(name):])
-print(f"The value of n is: {n}")
-create_graph(n, 'root', score_list, "bigram-analysis")
-
-print_stdout("Cracking using mono-alphabetic substitution")
-
-op = 'n'
-possible = []
-
-for i in range(1,27):
-
-    print(f"Iteration number: {i}")
-    cracked = cipher_obj.crack_caesar_27n(cipher_text, i)
+    cracked, n, score_list = cipher_obj.crack_caesar_frequency(cipher_text)
     print('Cracked Cipher Text:', cracked[:-1 * len(name)])
-    print_stdout(30 * "-")
-    # creating a list with all the possible name decodings for graph label
-    possible.append(cracked[-1 * len(name):])
+    print('Cracked name:', cracked[-1 * len(name):])
+    print(f"The value of n is: {n}")
+    create_graph(n, 'root', score_list, "frequency-analysis")
 
-    op = input("Type 'y' if it seems valid, else 'n': ")
-    if op == 'y':
+    print_stdout("Cracking using bigram analysis")
 
-        print('Cracked name:', cracked[-1 * len(name):])
-        for j in range(i+1, 27):
-            #add space labels for remaining edges
-            possible.append(' ')
+    cracked, n, score_list = cipher_obj.crack_caesar_bigram(cipher_text)
+    print('Cracked Cipher Text:', cracked[:-1 * len(name)])
+    print('Cracked name:', cracked[-1 * len(name):])
+    print(f"The value of n is: {n}")
+    create_graph(n, 'root', score_list, "bigram-analysis")
 
-        create_straight_graph(i, 'root', "mono-sub", possible)
-        break
+    print_stdout("Cracking using mono-alphabetic substitution")
+
+    op = 'n'
+    possible = []
+
+    for i in range(1,27):
+
+        print(f"Iteration number: {i}")
+        cracked = cipher_obj.crack_caesar_27n(cipher_text, i)
+        print('Cracked Cipher Text:', cracked[:-1 * len(name)])
+        print_stdout(30 * "-")
+        # creating a list with all the possible name decodings for graph label
+        possible.append(cracked[-1 * len(name):])
+
+        op = input("Type 'y' if it seems valid, else 'n': ")
+        if op == 'y':
+
+            print('Cracked name:', cracked[-1 * len(name):])
+            for j in range(i+1, 27):
+                #add space labels for remaining 
+                possible.append(' ')
+
+            create_straight_graph(i, 'root', "mono-sub", possible)
+            break
