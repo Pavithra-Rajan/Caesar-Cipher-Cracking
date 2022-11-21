@@ -25,13 +25,13 @@ python3 cipher.py -f messages/message.txt -c 4 -n pavithra
 - As there are only limited alphabets in the English language (26 + 1 for spaces in sentences), we can try out all the possibilities and choose the one that resembles a valid text.
 
 ### State-space graphs
-- Letter frequency
+- Letter frequency <p></p>
 ![frequency](/states/frequency-analysis.png "Letter Frequency")
 
-- Bigram frequency
+- Bigram frequency <p></p>
 ![bigram](/states/bigram-analysis.png "Bigram Frequency")
 
-- Mono-alphabetic substituition
+- Mono-alphabetic substituition <p></p>
 ![mono](/states/mono-sub.png "Mono-alphabetic substituition")
 
 ## Hill Climbing Method
