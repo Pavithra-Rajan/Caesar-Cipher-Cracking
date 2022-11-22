@@ -356,7 +356,7 @@ if __name__ == '__main__':
     print('Encrypted Cipher Text:', cipher_text[:-1 * len(name)])
 
     print_stdout("Encoding name")
-    print(f'Ciphertext corresponsding to {name}: {cipher_text[-1 * len(name):]}')
+    print(f'Ciphertext corresponding to {name}: {cipher_text[-1 * len(name):]}')
 
     print_stdout("Cracking using frequency analysis")
 

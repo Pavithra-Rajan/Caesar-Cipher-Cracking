@@ -42,24 +42,24 @@ python3 cipher.py -f messages/message.txt -c 4 -n pavithra
 python3 hill_climb.py -h
 ```
 ```console
-usage: hill_climb.py [-h] -f F
+usage: hill_climb.py [-h] -f F [-n N]
 
 optional arguments:
   -h, --help  show this help message and exit
-  -f F        Name of the file containing the
-              ciphertext to be decrypted
+  -f F        Name of the file containing the ciphertext to be decrypted
+  -n N        Encrypted Name to be decrypted
 ```
 ### Run the file
 ```console
-python3 hill-climb.py -f ciphers/cipher.txt 
+python3 hill-climb.py -f ciphers/cipher.txt -n tezmxlve
 ```
 
 ### Graph
 ![hill climbing](/states/hillclimbing.png "Hill Climbing") <p></p>
 Here the scores for each iteration will be computed till a local maximum is reached and shown to the user. If the text resembles a valid English text, then we can stop.
-We can see below that the scores progressively increase (becomes less negative). The graph depicting the scores across each iteration is also generated.
+We can see above that the scores progressively increase (becomes less negative). The graph depicting the scores across each iteration is also generated.
 
-### Install the required library
+### Install the required libraries
 ```console
 pip install -r requirements.txt
 ```

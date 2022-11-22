@@ -71,7 +71,7 @@ def plot_hill_graph(iters, fitness_values):
     plt.ylabel("Decryption score")
     plt.savefig("states/hillclimbing.png")
 
-def crack_caesar_quad(cipher, max_iter = 1000):
+def crack_caesar_quad(cipher, name_length, max_iter = 1000):
     '''
     This is an auxiliary function to crack the ciphertext.
     Args:
@@ -111,6 +111,7 @@ def crack_caesar_quad(cipher, max_iter = 1000):
                 print('Best score so far:', node_score)
                 cracked = decrypt(cipher, node).lower()
                 print('Cracked Cipher Text:', cracked, '\n')
+                print('Cracked Name Text:', cracked[-1 * name_length:], '\n')
             
             fitness_values.append(node_score)
             iters.append(itr)
@@ -167,7 +168,9 @@ class HillClimbing:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', type=str, required=True, help="Name of the file containing the ciphertext to be decrypted")
+    parser.add_argument('-n', type=str, help="Encrypted Name to be decrypted")
     args = parser.parse_args()
+    name = args.n
     f = open(args.f, 'r')
     cipher = f.read()
-    crack_caesar_quad(cipher.upper())
+    crack_caesar_quad(cipher.upper() + name.upper(), len(name))
