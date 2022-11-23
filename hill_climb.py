@@ -6,6 +6,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import string
+import matplotlib.pyplot as plt
+import networkx as nx
 
 def frequency_csv_read():
     '''
@@ -21,6 +23,67 @@ def frequency_csv_read():
 
     f.close()
     return freq_dict
+
+def create_labels(score_list, edge):
+    '''
+    This function creates the labels for the networkx graph edges.
+    Args:
+        score_list (list): List of the scores obtained via letter frequency/bigram frequency
+        edge (list[list]): A list containing pair list of each edge
+    Return:
+        labels which is a dict{tuple: value}
+    '''
+    labels = {}
+    count = 0
+    for i in edge:
+        test = (i[0], i[1])
+        labels[test] = score_list[count]
+        count = count + 1
+    #print(labels)
+    return labels
+
+def create_straight_graph(selected, root, labels):
+    '''
+    This function creates a straight graph with no edge labels
+    Args:
+        selected (int): The 'n' caesar rotation value chosen
+        root (str): The root of the graph
+        labels (list): A list of labels for the edges
+    '''
+
+    edge = [[root, 1]]
+    for i in range(1,selected[-1]):
+        edge.append([i, i+1])
+    #print(edge)
+    G = nx.Graph()
+    G.add_edges_from(edge)
+    pos = nx.spring_layout(G, scale=5)
+    plt.figure()
+
+    #color_map = ['yellow' if node in selected else 'pink' for node in G]  
+    color_map =[]
+    for node in G:
+        if node == selected[-1]:
+            color_map.append('green')
+
+        elif node in selected:
+            color_map.append('yellow')
+        
+        else:
+            color_map.append('pink')
+         
+    #graph = nx.draw_networkx(G,pos, node_color=color_map) # node lables
+
+    nx.draw(
+        G, pos, edge_color='black', width=1, linewidths=1,
+        node_size=400, node_color=color_map, alpha=0.9,
+        labels={node: node for node in G.nodes()}
+    )
+    nx.draw_networkx_edge_labels(G, pos, 
+    edge_labels = create_labels(labels, edge), font_color='red', font_size=8,
+    rotate=False)
+
+    plt.savefig("states/" + "soln" + ".png")
 
 def swap_chars(key):
     '''
@@ -71,7 +134,7 @@ def plot_hill_graph(iters, fitness_values):
     plt.ylabel("Decryption score")
     plt.savefig("states/hillclimbing.png")
 
-def crack_caesar_quad(cipher, name_length, max_iter = 1000):
+def crack_caesar_quad(cipher, name_length, enc_name, max_iter = 1000):
     '''
     This is an auxiliary function to crack the ciphertext.
     Args:
@@ -86,7 +149,9 @@ def crack_caesar_quad(cipher, name_length, max_iter = 1000):
     iters = []
 
     itr = 0
-    
+    name_crack = []
+    local_max = []
+
     while True:
         try: 
             node = list(string.ascii_uppercase)
@@ -112,15 +177,20 @@ def crack_caesar_quad(cipher, name_length, max_iter = 1000):
                 cracked = decrypt(cipher, node).lower()
                 print('Cracked Cipher Text:', cracked, '\n')
                 print('Cracked Name Text:', cracked[-1 * name_length:], '\n')
-            
+                local_max.append(itr)
+
+            name_crack.append(cracked[-1 * name_length:]) 
             fitness_values.append(node_score)
             iters.append(itr)
             
         except KeyboardInterrupt:
             print('End of decryption')
-            #print(abs(ord(cracked[0])-ord(cipher[0])))
-            #print(fitness_values)
-            plot_hill_graph(iters, fitness_values)          
+            print(f"The rotation factor is {abs(ord(enc_name[0])-ord(name_crack[-1][0]))}")
+            plot_hill_graph(iters, fitness_values)
+            create_straight_graph(local_max, "root", name_crack)
+            #print(name_crack)
+            #print(local_max)
+                      
             sys.exit()
 
 class HillClimbing:
@@ -173,4 +243,4 @@ if __name__ == '__main__':
     name = args.n
     f = open(args.f, 'r')
     cipher = f.read()
-    crack_caesar_quad(cipher.upper() + name.upper(), len(name))
+    crack_caesar_quad(cipher.upper() + name.upper(), len(name), name.lower())

@@ -98,6 +98,7 @@ def create_straight_graph(selected, root, file_name, labels):
         selected (int): The 'n' caesar rotation value chosen
         root (str): The root of the graph
         file_name (str): The file name for saving the graph
+        labels (list): A list of labels for each edge
     '''
 
     edge = [[root, 1]]

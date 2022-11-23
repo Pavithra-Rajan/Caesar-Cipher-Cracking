@@ -59,6 +59,11 @@ python3 hill-climb.py -f ciphers/cipher.txt -n tezmxlve
 Here the scores for each iteration will be computed till a local maximum is reached and shown to the user. If the text resembles a valid English text, then we can stop.
 We can see above that the scores progressively increase (becomes less negative). The graph depicting the scores across each iteration is also generated.
 
+### Solution path
+![hill climbing solution](/states/soln.png "Hill Climbing Solution") <p></p>
+This shows the possible decryptions of my name across each iteration. The yellow nodes depict local maximas and green depicts the final goal node.
+
+
 ### Install the required libraries
 ```console
 pip install -r requirements.txt
